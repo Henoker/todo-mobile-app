@@ -1,11 +1,27 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, Platform, FlatList, Text } from 'react-native';
+import axios from 'axios';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+interface Task {
+  id: number;
+  title: string;
+  completed: boolean;
+}
+
 export default function HomeScreen() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+
+  useEffect(() => {
+    axios.get('http://192.168.100.17:8000/api/tasks/')
+      .then(res => setTasks(res.data))
+      .catch(err => console.error('Error fetching tasks:', err));
+  }, []);
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -15,40 +31,26 @@ export default function HomeScreen() {
           style={styles.reactLogo}
         />
       }>
+      
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome to mobile app!</ThemedText>
+        <ThemedText type="title">Your Tasks</ThemedText>
         <HelloWave />
       </ThemedView>
+
       <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
+        {tasks.length === 0 ? (
+          <ThemedText>Loading or no tasks available...</ThemedText>
+        ) : (
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <Text style={styles.taskItem}>
+                {item.title} - {item.completed ? '✅' : '❌'}
+              </Text>
+            )}
+          />
+        )}
       </ThemedView>
     </ParallaxScrollView>
   );
@@ -70,5 +72,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  taskItem: {
+    fontSize: 16,
+    paddingVertical: 6,
   },
 });
